@@ -1,0 +1,46 @@
+name: Build RTScan IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "RTScan/**"
+      - "project.yml"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned archive
+        run: |
+          xcodebuild \
+            -project RTScan.xcodeproj \
+            -scheme RTScan \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/RTScan.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/RTScan.xcarchive/Products/Applications/RTScan.app build/Payload/
+          cd build && zip -r RTScan.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTScan-ipa
+          path: build/RTScan.ipa
