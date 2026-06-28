@@ -13,7 +13,7 @@ on:
 
 jobs:
   beta:
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       APP_IDENTIFIER: com.sangkyul.rtscan
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
