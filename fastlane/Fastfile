@@ -15,7 +15,8 @@ platform :ios do
 
     match(
       type: "appstore",
-      api_key: api_key
+      api_key: api_key,
+      readonly: false
     )
 
     build_app(
