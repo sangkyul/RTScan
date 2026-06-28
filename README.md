@@ -31,8 +31,99 @@ model per title.
 
 There's no way to compile or sign an iOS app without Xcode somewhere, and
 Xcode only runs on macOS — but you don't need to own a Mac. This project
-builds the app on a **free macOS runner in GitHub Actions**, and you sideload
-the resulting `.ipa` onto your iPhone from your PC using **Sideloadly**.
+builds **and signs and uploads** the app on a free macOS runner in GitHub
+Actions; you install it from there. Two paths, pick one:
+
+- **TestFlight (recommended if you have a paid Apple Developer account)** —
+  CI signs the build with your real distribution certificate and uploads it
+  straight to TestFlight. You install/update via the TestFlight app on your
+  phone. No cable, no resigning every 7 days. See "TestFlight setup" below.
+- **Sideloadly (works with just a free Apple ID)** — see the original
+  unsigned-IPA + Sideloadly steps further down. Simpler to set up, but
+  builds expire after 7 days and need re-sideloading over USB.
+
+---
+
+## TestFlight setup (paid Apple Developer account)
+
+This uses [fastlane](https://fastlane.tools) running inside GitHub Actions
+to: generate a distribution certificate + provisioning profile (via
+`match`), build the app, and upload it to TestFlight — all non-interactively,
+all on GitHub's macOS runner. You do the one-time setup below from a browser
+on your PC; no Xcode involved.
+
+### 1. Register the bundle ID and create the app record
+
+1. In the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list),
+   register an App ID matching `com.sangkyul.rtscan` (or change
+   `PRODUCT_BUNDLE_IDENTIFIER` in [project.yml](project.yml) and
+   `APP_IDENTIFIER` in [.github/workflows/build.yml](.github/workflows/build.yml)
+   / [fastlane/Appfile](fastlane/Appfile) / [fastlane/Matchfile](fastlane/Matchfile)
+   to whatever you choose — keep them all consistent).
+2. In [App Store Connect](https://appstoreconnect.apple.com/) → **My Apps**
+   → **+** → **New App**, create an iOS app with that same bundle ID.
+
+### 2. Create an App Store Connect API key
+
+App Store Connect → **Users and Access** → **Integrations** → **App Store
+Connect API** → generate a key with the **App Manager** role. Note the
+**Key ID** and **Issuer ID**, and download the `.p8` file — Apple only lets
+you download it once, keep it safe.
+
+### 3. Create a private repo for certificates (fastlane `match`)
+
+`match` needs somewhere to store the generated certificate/profile,
+encrypted. Create a second, **private** GitHub repo (e.g.
+`rtscan-certificates`) for this — it just holds encrypted files, never your
+app code.
+
+### 4. Add GitHub Actions secrets
+
+In the **RTScan** repo → **Settings** → **Secrets and variables** →
+**Actions**, add:
+
+| Secret | Value |
+|---|---|
+| `APPLE_TEAM_ID` | Your 10-character Team ID (Apple Developer portal → Membership) |
+| `ASC_KEY_ID` | The Key ID from step 2 |
+| `ASC_ISSUER_ID` | The Issuer ID from step 2 |
+| `ASC_KEY_CONTENT` | The `.p8` file content, base64-encoded (e.g. `certutil -encode key.p8 tmp.b64` on Windows, then strip the header/footer lines, or `base64 -w0 key.p8` on Linux/macOS/WSL) |
+| `MATCH_PASSWORD` | Any passphrase you choose — encrypts the certs repo |
+| `MATCH_GIT_URL` | `https://github.com/<you>/rtscan-certificates.git` |
+| `MATCH_GIT_BASIC_AUTHORIZATION` | A [GitHub PAT](https://github.com/settings/tokens) (classic, `repo` scope) base64-encoded as `username:token`, so CI can push/pull the certs repo |
+
+### 5. Push
+
+Pushing to `main` now triggers
+[`.github/workflows/build.yml`](.github/workflows/build.yml), which installs
+XcodeGen + fastlane, generates the Xcode project, and runs the `beta` lane
+([fastlane/Fastfile](fastlane/Fastfile)): `match` fetches/creates your
+signing certificate and provisioning profile, `build_app` produces a signed
+`.ipa`, and `upload_to_testflight` ships it.
+
+### 6. Install via TestFlight
+
+1. Install the **TestFlight** app from the App Store on your iPhone.
+2. In App Store Connect → your app → **TestFlight** tab → **Internal
+   Testing**, add yourself (the Apple ID on your developer account) as a
+   tester if you aren't already. Internal testing builds are available
+   within minutes, no App Review wait.
+3. Accept the TestFlight invite email, open the TestFlight app, install
+   RTScan, grant camera access, and test it.
+4. Every future push to `main` uploads a new build automatically — open
+   TestFlight to update.
+
+---
+
+## Alternative: Sideloadly (free Apple ID, no developer account needed)
+
+Skip this section if you're using TestFlight above — it's kept here for
+reference if you ever want to go back to a no-developer-account setup. Note
+that [.github/workflows/build.yml](.github/workflows/build.yml) in this repo
+is currently wired for the TestFlight/fastlane path; to use Sideloadly
+instead you'd revert it to a plain `xcodebuild archive` step with
+`CODE_SIGNING_ALLOWED=NO` (and the matching settings in
+[project.yml](project.yml)) instead of running `fastlane beta`.
 
 You will need: a free GitHub account, a free Apple ID, and a USB cable for
 your iPhone.

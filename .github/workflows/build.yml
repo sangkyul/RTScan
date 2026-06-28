@@ -1,4 +1,4 @@
-name: Build RTScan IPA
+name: Build and upload RTScan to TestFlight
 
 on:
   workflow_dispatch:
@@ -7,11 +7,22 @@ on:
     paths:
       - "RTScan/**"
       - "project.yml"
+      - "fastlane/**"
+      - "Gemfile"
       - ".github/workflows/build.yml"
 
 jobs:
-  build:
+  beta:
     runs-on: macos-14
+    env:
+      APP_IDENTIFIER: com.sangkyul.rtscan
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+      MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
     steps:
       - uses: actions/checkout@v4
 
@@ -21,26 +32,10 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build unsigned archive
-        run: |
-          xcodebuild \
-            -project RTScan.xcodeproj \
-            -scheme RTScan \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath build/RTScan.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            archive
-
-      - name: Package unsigned IPA
-        run: |
-          mkdir -p build/Payload
-          cp -R build/RTScan.xcarchive/Products/Applications/RTScan.app build/Payload/
-          cd build && zip -r RTScan.ipa Payload
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          name: RTScan-ipa
-          path: build/RTScan.ipa
+          bundler-cache: true
+
+      - name: Build and upload to TestFlight
+        run: bundle exec fastlane beta

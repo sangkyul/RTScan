@@ -1,6 +1,6 @@
 name: RTScan
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.sangkyul
 
 targets:
   RTScan:
@@ -11,12 +11,12 @@ targets:
       - RTScan/RTScan
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.rtscan
+        PRODUCT_BUNDLE_IDENTIFIER: com.sangkyul.rtscan
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSCameraUsageDescription: "RTScan uses the camera to read show and movie titles off your screen so it can look up Rotten Tomatoes scores."
         CODE_SIGN_STYLE: Manual
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: YES
+        CODE_SIGNING_ALLOWED: YES
