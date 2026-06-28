@@ -26,7 +26,7 @@ platform :ios do
       scheme: "RTScan",
       export_method: "app-store",
       output_directory: "build",
-      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} PROVISIONING_PROFILE_SPECIFIER=\"#{profile_name}\" CODE_SIGN_IDENTITY=\"Apple Distribution\"",
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} PROVISIONING_PROFILE_SPECIFIER=\"#{profile_name}\" CODE_SIGN_IDENTITY=\"Apple Distribution\" CURRENT_PROJECT_VERSION=#{ENV['GITHUB_RUN_NUMBER'] || '1'}",
       export_options: {
         provisioningProfiles: {
           app_identifier => profile_name
