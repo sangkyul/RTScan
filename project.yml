@@ -8,7 +8,7 @@ targets:
     platform: iOS
     deploymentTarget: "16.0"
     sources:
-      - RTScan/RTScan
+      - RTScan
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sangkyul.rtscan
