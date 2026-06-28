@@ -19,6 +19,9 @@ platform :ios do
       readonly: false
     )
 
+    app_identifier = ENV["APP_IDENTIFIER"] || "com.sangkyul.rtscan"
+    profile_name = ENV["sigh_#{app_identifier}_appstore_profile-name"]
+
     build_app(
       scheme: "RTScan",
       export_method: "app-store",
@@ -26,7 +29,7 @@ platform :ios do
       xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']}",
       export_options: {
         provisioningProfiles: {
-          (ENV["APP_IDENTIFIER"] || "com.sangkyul.rtscan") => lane_context[SharedValues::SIGH_PROFILE_NAME]
+          app_identifier => profile_name
         }
       }
     )
