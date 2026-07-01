@@ -35,6 +35,7 @@ struct ScorePopupView: View {
                     .foregroundColor(.white.opacity(0.7))
                     .font(.system(size: 20))
             }
+            .buttonStyle(.plain)
         }
         .padding(14)
         .background(match.tier.color)

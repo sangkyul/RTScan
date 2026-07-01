@@ -71,6 +71,7 @@ final class CameraManager: NSObject, ObservableObject {
     func dismissCurrentMatch() {
         DispatchQueue.main.async { [weak self] in
             self?.currentMatch = nil
+            self?.lastShownTitles.removeAll()
         }
     }
 }
