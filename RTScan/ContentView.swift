@@ -33,6 +33,15 @@ struct ContentView: View {
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: cameraManager.currentMatch)
         }
+        .gesture(
+            MagnificationGesture()
+                .onChanged { value in
+                    cameraManager.setZoom(scaleDelta: value)
+                }
+                .onEnded { _ in
+                    cameraManager.commitZoom()
+                }
+        )
         .onAppear {
             cameraManager.requestAccessAndStart()
         }

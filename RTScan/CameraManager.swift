@@ -20,6 +20,9 @@ final class CameraManager: NSObject, ObservableObject {
     private var lastShownTitles: Set<String> = []
     private var isResolving = false
 
+    private var activeDevice: AVCaptureDevice?
+    private var zoomFactor: CGFloat = 1.0
+
     func requestAccessAndStart() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -47,6 +50,7 @@ final class CameraManager: NSObject, ObservableObject {
                let input = try? AVCaptureDeviceInput(device: device),
                self.session.canAddInput(input) {
                 self.session.addInput(input)
+                self.activeDevice = device
             }
 
             self.videoOutput.setSampleBufferDelegate(self, queue: self.videoQueue)
@@ -65,6 +69,21 @@ final class CameraManager: NSObject, ObservableObject {
         sessionQueue.async { [weak self] in
             self?.session.stopRunning()
         }
+    }
+
+    func setZoom(scaleDelta: CGFloat) {
+        guard let device = activeDevice else { return }
+        let maxZoom = min(device.activeFormat.videoMaxZoomFactor, 8.0)
+        let newFactor = min(max(zoomFactor * scaleDelta, 1.0), maxZoom)
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = newFactor
+            device.unlockForConfiguration()
+        } catch {}
+    }
+
+    func commitZoom() {
+        zoomFactor = activeDevice?.videoZoomFactor ?? zoomFactor
     }
 
     /// Lets the user dismiss the current popup and re-scan for a new title.
